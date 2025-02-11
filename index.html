@@ -102,35 +102,47 @@
         class DraggableScroll extends Scroll {
             constructor(registry, domNode, { emitter }) {
                 super(registry, domNode, { emitter });
-                this.domNode.addEventListener('dragend', (e) => this.handleDragEnd(e));
+                this.domNode.addEventListener('drop', (e) => this.handleDrop(e), true);
             }
 
-            handleDragStart(e) {
-                this.dragged = e.dataTransfer.getData('text/plain');
-            }
-            
-            /*a broken handler for demo purpose*/
-            handleDragEnd(e) {
-                e.preventDefault();
+            handleDrop(e) {
+                // if (e.dataTransfer.files.length == 0)
+                //     e.stopImmediatePropagation();
 
-                const data = this.dragged;
-                const selection = quill.getSelection();
-                quill.deleteText(selection.index, selection.length);
+                e.stopImmediatePropagation();
 
-                let index;
-                if (document.caretRangeFromPoint) {
-                    index = document.caretRangeFromPoint(e.clientX, e.clientY).startOffset;
-                } else {
-                    // firefox
-                    index = e.rangeOffset;
+                // If files are dropped
+                if (e.dataTransfer.files.length > 0) {
+                    const file = e.dataTransfer.files[0]; // Get the first file
+                    const reader = new FileReader();
+
+                    // Check if the dropped file is an image
+                    if (file.type.startsWith('image/')) {
+                        reader.onload = (event) => {
+                            const img = document.createElement('img');
+                            img.src = event.target.result; // Set the image source to the file data
+
+                            // Apply custom styles to the image
+                            img.style.width = '100px';  // Example style: set width
+                            img.style.height = '100px'; // Example style: set height
+                            img.style.border = '2px solid #ccc'; // Example style: set border
+
+                        };
+
+                        // Read the file as a Data URL (base64)
+                        reader.readAsDataURL(file);
+                    }
                 }
 
-                quill.insertText(index, data);
-                quill.setSelection(index + data.length, 0);
             }
-        };
+
+            handleDragStart(e) { 
+                this.dragged = e.target;
+            }
+        }
 
         Quill.register(DraggableScroll);
+
 
         var quill = new Quill('#editor', {
             theme: 'snow',
@@ -147,6 +159,9 @@
         let targetElement;
         let resizeDirection = '';
         const MIN_SIZE = 10; // Minimum size for resize (in px)
+
+        // To store the original styles of the image before drag
+        let originalStyles = {};
 
         // Mouseover untuk memilih elemen
         editor.addEventListener('mouseover', (e) => {
@@ -217,10 +232,22 @@
                 startWidth = rect.width;
                 startHeight = rect.height;
                 e.preventDefault(); // Mencegah pemilihan teks atau hal lainnya
+
+                // Store original styles before drag
+                if (targetElement.tagName === 'IMG') {
+                    // Save all the inline styles of the image
+                    originalStyles = {
+                        width: targetElement.style.width,
+                        height: targetElement.style.height,
+                        maxWidth: targetElement.style.maxWidth,
+                        maxHeight: targetElement.style.maxHeight,
+                        // Add any other style properties that you want to preserve
+                    };
+                }
             }
         });
 
-       // Selama mouse bergerak, ubah ukuran elemen
+        // Selama mouse bergerak, ubah ukuran elemen
         document.addEventListener('mousemove', (e) => {
             if (isResizing && targetElement) {
                 const dx = e.clientX - startX;
@@ -234,7 +261,6 @@
                     const newHeight = startHeight - dy;
                     if (newHeight >= MIN_SIZE) {
                         targetElement.style.height = `${newHeight}px`;
-                        // targetElement.style.top = `${rect.top + dy}px`; // Memperbaiki posisi top
                     }
                 } else if (resizeDirection === 'bottom') {
                     const newHeight = startHeight + dy;
@@ -245,7 +271,6 @@
                     const newWidth = startWidth - dx;
                     if (newWidth >= MIN_SIZE) {
                         targetElement.style.width = `${newWidth}px`;
-                        // targetElement.style.left = `${rect.left + dx}px`; // Memperbaiki posisi left
                     }
                 } else if (resizeDirection === 'right') {
                     const newWidth = startWidth + dx;
@@ -256,7 +281,6 @@
             }
         });
 
-
         // Menghentikan resizing saat mouse dilepas
         document.addEventListener('mouseup', () => {
             if (isResizing) {
@@ -266,6 +290,18 @@
                 }
                 resizeDirection = ''; // Reset resizeDirection saat mouse up
                 targetElement = null; // Reset targetElement
+            }
+        });
+
+        // Revert the image styles to their original state after drag
+        editor.addEventListener('drop', (e) => {
+            const target = e.target;
+            if (target.tagName === 'IMG') {
+                // Reapply all the original styles as inline styles
+                if (originalStyles.width) target.style.width = originalStyles.width;
+                if (originalStyles.height) target.style.height = originalStyles.height;
+                if (originalStyles.maxWidth) target.style.maxWidth = originalStyles.maxWidth;
+                if (originalStyles.maxHeight) target.style.maxHeight = originalStyles.maxHeight;
             }
         });
     </script>
