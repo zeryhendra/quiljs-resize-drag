@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tes QuilJS</title>
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+    <style>
+        .toolbar-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+
+        #toolbar-left {
+            display: flex;
+            gap: 10px;
+        }
+
+        #toolbar-right {
+            margin-left: auto;
+        }
+
+        #editor {
+            height: 300px;
+        }
+
+        #save-button {
+            margin-right: 2px;
+            border: 1px solid #D5D4FF;
+            padding: auto;
+            width: 50px;
+            background: rgba(213, 212, 255, 0.5);
+        }
+
+        .highlighted {
+            border: 2px solid blue;
+            position: relative;
+        }
+
+        .resize-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            bottom: 0;
+            right: 0;
+            cursor: nwse-resize;
+        }
+
+        .selected-element {
+            border: 2px solid #4CAF50;
+            background-color: rgba(76, 175, 80, 0.2);
+        }
+
+        .resizable-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .editor-container {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div id="toolbar" class="toolbar-container">
+        <div id="toolbar-left">
+            <button class="ql-bold"></button>
+            <button class="ql-italic"></button>
+            <button id='ql-image' class="ql-image"></button>
+            <button id='ql-video' class="ql-video"></button>
+            <select class="ql-size">
+                <option value="small"></option>
+                <option selected></option>
+                <option value="large"></option>
+                <option value="huge"></option>
+            </select>
+        </div>
+
+        <div id="toolbar-right">
+            <button id="save-button">Save</button>
+        </div>
+    </div>
+
+    <div id="editor" class="editor-container">
+        <p>Hello World!</p>
+        <p>Some initial <strong>bold</strong> text</p>
+        <p><br /></p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
+    <script>
+        let Scroll = Quill.import('blots/scroll');
+
+        class DraggableScroll extends Scroll {
+            constructor(registry, domNode, { emitter }) {
+                super(registry, domNode, { emitter });
+                this.domNode.addEventListener('dragend', (e) => this.handleDragEnd(e));
+            }
+
+            handleDragStart(e) {
+                this.dragged = e.dataTransfer.getData('text/plain');
+            }
+            
+            /*a broken handler for demo purpose*/
+            handleDragEnd(e) {
+                e.preventDefault();
+
+                const data = this.dragged;
+                const selection = quill.getSelection();
+                quill.deleteText(selection.index, selection.length);
+
+                let index;
+                if (document.caretRangeFromPoint) {
+                    index = document.caretRangeFromPoint(e.clientX, e.clientY).startOffset;
+                } else {
+                    // firefox
+                    index = e.rangeOffset;
+                }
+
+                quill.insertText(index, data);
+                quill.setSelection(index + data.length, 0);
+            }
+        };
+
+        Quill.register(DraggableScroll);
+
+        var quill = new Quill('#editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: {
+                    container: "#toolbar"
+                }
+            }
+        });
+
+        const editor = document.getElementById('editor');
+        let isResizing = false;
+        let startX, startY, startWidth, startHeight;
+        let targetElement;
+        let resizeDirection = '';
+        const MIN_SIZE = 10; // Minimum size for resize (in px)
+
+        // Mouseover untuk memilih elemen
+        editor.addEventListener('mouseover', (e) => {
+            const selectedElement = e.target.closest('p');
+            if (selectedElement) {
+                selectedElement.id = 'selected-element';
+                const elementsInsideP = selectedElement.querySelectorAll('img, strong, em, span, p');
+                elementsInsideP.forEach((el) => {
+                    el.classList.remove('highlighted');
+                });
+
+                if (e.target !== selectedElement) {
+                    e.target.classList.add('highlighted');
+                }
+            }
+        });
+
+        // Mouseout untuk menghapus highlight dan ID selected-element
+        editor.addEventListener('mouseout', (e) => {
+            if (e.target.closest('p')) {
+                e.target.closest('p').id = '';
+                const elementsInsideP = e.target.closest('p').querySelectorAll('img, strong, em, span, p');
+                elementsInsideP.forEach((el) => {
+                    el.classList.remove('highlighted');
+                });
+            }
+        });
+
+        // Menyentuh batas resize
+        editor.addEventListener('mousemove', (e) => {
+            const highlightedElement = document.querySelector('.highlighted');
+            if (highlightedElement && !isResizing) {
+                const rect = highlightedElement.getBoundingClientRect();
+                const offset = 5;
+
+                // Menentukan posisi kursor untuk resize
+                if (e.clientY >= rect.top - offset && e.clientY <= rect.top + offset) {
+                    highlightedElement.style.cursor = 'ns-resize';
+                    targetElement = highlightedElement;
+                    resizeDirection = 'top';
+                } else if (e.clientY >= rect.bottom - offset && e.clientY <= rect.bottom + offset) {
+                    highlightedElement.style.cursor = 'ns-resize';
+                    targetElement = highlightedElement;
+                    resizeDirection = 'bottom';
+                } else if (e.clientX >= rect.left - offset && e.clientX <= rect.left + offset) {
+                    highlightedElement.style.cursor = 'ew-resize';
+                    targetElement = highlightedElement;
+                    resizeDirection = 'left';
+                } else if (e.clientX >= rect.right - offset && e.clientX <= rect.right + offset) {
+                    highlightedElement.style.cursor = 'ew-resize';
+                    targetElement = highlightedElement;
+                    resizeDirection = 'right';
+                } else {
+                    highlightedElement.style.cursor = 'default';
+                    targetElement = null;
+                    resizeDirection = '';
+                }
+            }
+        });
+
+        // Mouse down untuk memulai resize
+        document.addEventListener('mousedown', (e) => {
+            if (targetElement && targetElement.classList.contains('highlighted')) {
+                isResizing = true;
+                const rect = targetElement.getBoundingClientRect();
+                startX = e.clientX;
+                startY = e.clientY;
+                startWidth = rect.width;
+                startHeight = rect.height;
+                e.preventDefault(); // Mencegah pemilihan teks atau hal lainnya
+            }
+        });
+
+       // Selama mouse bergerak, ubah ukuran elemen
+        document.addEventListener('mousemove', (e) => {
+            if (isResizing && targetElement) {
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                // Dapatkan posisi elemen (rect) setiap kali mouse bergerak
+                const rect = targetElement.getBoundingClientRect();
+
+                // Resize top, bottom, left, right dengan batas ukuran minimal
+                if (resizeDirection === 'top') {
+                    const newHeight = startHeight - dy;
+                    if (newHeight >= MIN_SIZE) {
+                        targetElement.style.height = `${newHeight}px`;
+                        // targetElement.style.top = `${rect.top + dy}px`; // Memperbaiki posisi top
+                    }
+                } else if (resizeDirection === 'bottom') {
+                    const newHeight = startHeight + dy;
+                    if (newHeight >= MIN_SIZE) {
+                        targetElement.style.height = `${newHeight}px`;
+                    }
+                } else if (resizeDirection === 'left') {
+                    const newWidth = startWidth - dx;
+                    if (newWidth >= MIN_SIZE) {
+                        targetElement.style.width = `${newWidth}px`;
+                        // targetElement.style.left = `${rect.left + dx}px`; // Memperbaiki posisi left
+                    }
+                } else if (resizeDirection === 'right') {
+                    const newWidth = startWidth + dx;
+                    if (newWidth >= MIN_SIZE) {
+                        targetElement.style.width = `${newWidth}px`;
+                    }
+                }
+            }
+        });
+
+
+        // Menghentikan resizing saat mouse dilepas
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                if (targetElement) {
+                    targetElement.style.cursor = 'default'; // Reset cursor
+                }
+                resizeDirection = ''; // Reset resizeDirection saat mouse up
+                targetElement = null; // Reset targetElement
+            }
+        });
+    </script>
+</body>
+</html>
