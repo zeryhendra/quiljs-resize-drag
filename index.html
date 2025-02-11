@@ -241,7 +241,6 @@
                         height: targetElement.style.height,
                         maxWidth: targetElement.style.maxWidth,
                         maxHeight: targetElement.style.maxHeight,
-                        // Add any other style properties that you want to preserve
                     };
                 }
             }
@@ -293,17 +292,6 @@
             }
         });
 
-        // Revert the image styles to their original state after drag
-        editor.addEventListener('drop', (e) => {
-            const target = e.target;
-            if (target.tagName === 'IMG') {
-                // Reapply all the original styles as inline styles
-                if (originalStyles.width) target.style.width = originalStyles.width;
-                if (originalStyles.height) target.style.height = originalStyles.height;
-                if (originalStyles.maxWidth) target.style.maxWidth = originalStyles.maxWidth;
-                if (originalStyles.maxHeight) target.style.maxHeight = originalStyles.maxHeight;
-            }
-        });
     </script>
 </body>
 </html>
