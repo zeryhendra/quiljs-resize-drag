@@ -160,8 +160,6 @@
         let resizeDirection = '';
         const MIN_SIZE = 10; // Minimum size for resize (in px)
 
-        // To store the original styles of the image before drag
-        let originalStyles = {};
 
         // Mouseover untuk memilih elemen
         editor.addEventListener('mouseover', (e) => {
@@ -233,16 +231,6 @@
                 startHeight = rect.height;
                 e.preventDefault(); // Mencegah pemilihan teks atau hal lainnya
 
-                // Store original styles before drag
-                if (targetElement.tagName === 'IMG') {
-                    // Save all the inline styles of the image
-                    originalStyles = {
-                        width: targetElement.style.width,
-                        height: targetElement.style.height,
-                        maxWidth: targetElement.style.maxWidth,
-                        maxHeight: targetElement.style.maxHeight,
-                    };
-                }
             }
         });
 
@@ -287,7 +275,7 @@
                 if (targetElement) {
                     targetElement.style.cursor = 'default'; // Reset cursor
                 }
-                resizeDirection = ''; // Reset resizeDirection saat mouse up
+                resizeDirection = ''; // Reset resizeDirection 
                 targetElement = null; // Reset targetElement
             }
         });
