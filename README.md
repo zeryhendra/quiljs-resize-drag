@@ -1,4 +1,4 @@
-# Percobaan  Quiljs (resize, drag & drop)
+# Quiljs (resize, drag & drop)
 
 percobaan untuk "resize", "drag and drop" pada teks dan gambar.
 
