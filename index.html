@@ -102,320 +102,320 @@
     </div>
 
     <!-- javascript function -->
-<script>
-    // tombol save untuk melihat html pada editor quiljs
-    function save() {
-        const htmlContent = quill.root.innerHTML;
-        console.log(htmlContent);
-    }
-        
-
-    // Handler untuk tombol image
-    function uploadImageToServer(file) {
-        return new Promise((resolve, reject) => {
-            const formData = new FormData();
-            formData.append('file', file);  // Menambahkan file yang dipilih ke dalam FormData
-
-            // contoh penggunaan JWT token dari localStorage (tidak disarankan menggunakan localstorage)
-            // const token = localStorage.getItem('nama_token_jwt');  // gunakan nama token jwt yang sesuai
-
-            // if (!token) {
-            //    reject('Token not found. Please log in again.');
-            //    return;
-            // }
-
-            let urlimage = 'http://localhost:8080/.../upload-image'; // gunakan alamat yang tepat untuk melakukan aksi upload gambar
-            // Mengirim file gambar ke server menggunakan fetch
-            fetch(urlimage, {
-                method: 'POST',
-                headers: {
-                    // 'Authorization': `Bearer ${token}`, // jika menggunakan jwt
-                    'Accept': 'application/json',  
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    resolve(data.imageUrl); // Mengembalikan URL gambar yang di-upload
-                } else {
-                    reject('Upload failed: ' + data.error);
-                }
-            })
-            .catch(error => {
-                reject('Error uploading image: ' + error);
-            });
-        });
-    }
-
-    /**
-     * imgInsert = 1; image base64
-     * imgInsert = 2; image filename
-     * imgInsert = 3; image base64 + image filename (tidak disarankan)
-     */
-    var imgInsert = 2; 
-    // Handler untuk tombol image
-    function showImageUI() {
-        // Buat elemen input file secara dinamis
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';  // Hanya menerima file gambar
-        input.style.display = 'none'; // Sembunyikan input file dari user
-        
-        // Tangani event saat file dipilih
-        input.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-
-                // imgInsert
-                if (imgInsert == 1 || imgInsert == 3) {
-
-                    // Membaca file gambar sebagai base64 (untuk digunakan di editor)
-                    const reader = new FileReader();
-                    reader.onloadend = function () {
-                        const base64Image = reader.result;  // Ini adalah gambar dalam format base64
-                        
-                        // Mendapatkan posisi kursor saat ini di editor
-                        const range = quill.getSelection();
-                        
-                        // Sisipkan gambar base64 ke dalam editor (pertama, menggunakan base64)
-                        quill.insertEmbed(range.index, 'image', base64Image);
-                        
-                        // Menampilkan gambar base64 pada console
-                        console.log("Base64 Image:", base64Image);
-                    };
-                    reader.readAsDataURL(file); // Membaca file sebagai Data URL (base64)
-
-                }
-                
-                // imgInsert
-                if (imgInsert == 2 || imgInsert == 3) {
-
-                    // Sekarang, kita akan meng-upload gambar ke server
-                    uploadImageToServer(file)  // Panggil fungsi upload
-                        .then(imageUrl => {
-                            // Menyisipkan gambar dengan URL yang diterima dari server ke dalam editor (menggunakan nama file yang di-upload)
-                            const range = quill.getSelection();
-                            quill.insertEmbed(range.index + 1, 'image', imageUrl);  // Sisipkan URL gambar yang di-upload
-
-                            // Menampilkan URL gambar yang telah di-upload di konsol
-                            console.log("Uploaded Image URL:", imageUrl);
-                        })
-                        .catch(error => {
-                            console.error(error);
-                        });
-
-                }
-            }
-        });
-        
-        // Trigger file dialog
-        input.click();
-    }
-
-</script>
-
-<!-- javascript quiljs -->
-<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
-
-<script>
-    let Scroll = Quill.import('blots/scroll');
-
-    // draggable scroll
-    class DraggableScroll extends Scroll {
-        constructor(registry, domNode, { emitter }) {
-            super(registry, domNode, { emitter });
-            this.domNode.addEventListener('drop', (e) => this.handleDrop(e), true);
+    <script>
+        // tombol save untuk melihat html pada editor quiljs
+        function save() {
+            const htmlContent = quill.root.innerHTML;
+            console.log(htmlContent);
         }
-
-        handleDrop(e) {
-            // if (e.dataTransfer.files.length == 0)
-            //     e.stopImmediatePropagation();
-
-            e.stopImmediatePropagation();
-
-            // If files are dropped
-            if (e.dataTransfer.files.length > 0) {
-                const file = e.dataTransfer.files[0]; // Get the first file
-                const reader = new FileReader();
-
-                // Check if the dropped file is an image
-                if (file.type.startsWith('image/')) {
-                    reader.onload = (event) => {
-                        const img = document.createElement('img');
-                        img.src = event.target.result; // Set the image source to the file data
-
-                        // Apply custom styles to the image
-                        img.style.width = '100px';  // Example style: set width
-                        img.style.height = '100px'; // Example style: set height
-                        img.style.border = '2px solid #ccc'; // Example style: set border
-
-                    };
-
-                    // Read the file as a Data URL (base64)
-                    reader.readAsDataURL(file);
-                }
-            }
-
-        }
-
-        handleDragStart(e) { 
-            this.dragged = e.target;
-        }
-    }
-    Quill.register(DraggableScroll);
-
-
-    // quil js toolbar
-    var quill = new Quill('#editor', {
-        theme: 'snow',
-        modules: {
-            toolbar: {
-                container: "#toolbar",
-                handlers: {
-                    link: function(value) {
-                        if (value) {
-                            const href = prompt('Enter the URL');
-                            this.quill.format('link', href);
-                        } else {
-                            this.quill.format('link', false);
-                        }
+            
+    
+        // Handler untuk tombol image
+        function uploadImageToServer(file) {
+            return new Promise((resolve, reject) => {
+                const formData = new FormData();
+                formData.append('file', file);  // Menambahkan file yang dipilih ke dalam FormData
+    
+                // contoh penggunaan JWT token dari localStorage (tidak disarankan menggunakan localstorage)
+                // const token = localStorage.getItem('nama_token_jwt');  // gunakan nama token jwt yang sesuai
+    
+                // if (!token) {
+                //    reject('Token not found. Please log in again.');
+                //    return;
+                // }
+    
+                let urlimage = 'http://localhost:8080/.../upload-image'; // gunakan alamat yang tepat untuk melakukan aksi upload gambar
+                // Mengirim file gambar ke server menggunakan fetch
+                fetch(urlimage, {
+                    method: 'POST',
+                    headers: {
+                        // 'Authorization': `Bearer ${token}`, // jika menggunakan jwt
+                        'Accept': 'application/json',  
                     },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        resolve(data.imageUrl); // Mengembalikan URL gambar yang di-upload
+                    } else {
+                        reject('Upload failed: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    reject('Error uploading image: ' + error);
+                });
+            });
+        }
+    
+        /**
+         * imgInsert = 1; image base64
+         * imgInsert = 2; image filename
+         * imgInsert = 3; image base64 + image filename (tidak disarankan)
+         */
+        var imgInsert = 2; 
+        // Handler untuk tombol image
+        function showImageUI() {
+            // Buat elemen input file secara dinamis
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';  // Hanya menerima file gambar
+            input.style.display = 'none'; // Sembunyikan input file dari user
+            
+            // Tangani event saat file dipilih
+            input.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+    
+                    // imgInsert
+                    if (imgInsert == 1 || imgInsert == 3) {
+    
+                        // Membaca file gambar sebagai base64 (untuk digunakan di editor)
+                        const reader = new FileReader();
+                        reader.onloadend = function () {
+                            const base64Image = reader.result;  // Ini adalah gambar dalam format base64
+                            
+                            // Mendapatkan posisi kursor saat ini di editor
+                            const range = quill.getSelection();
+                            
+                            // Sisipkan gambar base64 ke dalam editor (pertama, menggunakan base64)
+                            quill.insertEmbed(range.index, 'image', base64Image);
+                            
+                            // Menampilkan gambar base64 pada console
+                            console.log("Base64 Image:", base64Image);
+                        };
+                        reader.readAsDataURL(file); // Membaca file sebagai Data URL (base64)
+    
+                    }
                     
+                    // imgInsert
+                    if (imgInsert == 2 || imgInsert == 3) {
+    
+                        // Sekarang, kita akan meng-upload gambar ke server
+                        uploadImageToServer(file)  // Panggil fungsi upload
+                            .then(imageUrl => {
+                                // Menyisipkan gambar dengan URL yang diterima dari server ke dalam editor (menggunakan nama file yang di-upload)
+                                const range = quill.getSelection();
+                                quill.insertEmbed(range.index + 1, 'image', imageUrl);  // Sisipkan URL gambar yang di-upload
+    
+                                // Menampilkan URL gambar yang telah di-upload di konsol
+                                console.log("Uploaded Image URL:", imageUrl);
+                            })
+                            .catch(error => {
+                                console.error(error);
+                            });
+    
+                    }
                 }
-            },
-        }
-    });
-    const toolbar = quill.getModule('toolbar');
-    toolbar.addHandler('image', showImageUI);
-
-    const editor = document.getElementById('editor');
-    let isResizing = false;
-    let startX, startY, startWidth, startHeight;
-    let targetElement;
-    let resizeDirection = '';
-    const MIN_SIZE = 10; // Minimum size for resize (in px)
-
-
-    // Mouseover untuk memilih elemen
-    editor.addEventListener('mouseover', (e) => {
-        const selectedElement = e.target.closest('p');
-        if (selectedElement) {
-            selectedElement.id = 'selected-element';
-            const elementsInsideP = selectedElement.querySelectorAll('img, strong, em, span, p');
-            elementsInsideP.forEach((el) => {
-                el.classList.remove('highlighted');
             });
-
-            if (e.target !== selectedElement) {
-                e.target.classList.add('highlighted');
+            
+            // Trigger file dialog
+            input.click();
+        }
+    
+    </script>
+    
+    <!-- javascript quiljs -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+    
+    <script>
+        let Scroll = Quill.import('blots/scroll');
+    
+        // draggable scroll
+        class DraggableScroll extends Scroll {
+            constructor(registry, domNode, { emitter }) {
+                super(registry, domNode, { emitter });
+                this.domNode.addEventListener('drop', (e) => this.handleDrop(e), true);
+            }
+    
+            handleDrop(e) {
+                // if (e.dataTransfer.files.length == 0)
+                //     e.stopImmediatePropagation();
+    
+                e.stopImmediatePropagation();
+    
+                // If files are dropped
+                if (e.dataTransfer.files.length > 0) {
+                    const file = e.dataTransfer.files[0]; // Get the first file
+                    const reader = new FileReader();
+    
+                    // Check if the dropped file is an image
+                    if (file.type.startsWith('image/')) {
+                        reader.onload = (event) => {
+                            const img = document.createElement('img');
+                            img.src = event.target.result; // Set the image source to the file data
+    
+                            // Apply custom styles to the image
+                            img.style.width = '100px';  // Example style: set width
+                            img.style.height = '100px'; // Example style: set height
+                            img.style.border = '2px solid #ccc'; // Example style: set border
+    
+                        };
+    
+                        // Read the file as a Data URL (base64)
+                        reader.readAsDataURL(file);
+                    }
+                }
+    
+            }
+    
+            handleDragStart(e) { 
+                this.dragged = e.target;
             }
         }
-    });
-
-    // Mouseout untuk menghapus highlight dan ID selected-element
-    editor.addEventListener('mouseout', (e) => {
-        if (e.target.closest('p')) {
-            e.target.closest('p').id = '';
-            const elementsInsideP = e.target.closest('p').querySelectorAll('img, strong, em, span, p');
-            elementsInsideP.forEach((el) => {
-                el.classList.remove('highlighted');
-            });
-        }
-    });
-
-    // Menyentuh batas resize
-    editor.addEventListener('mousemove', (e) => {
-        const highlightedElement = document.querySelector('.highlighted');
-        if (highlightedElement && !isResizing) {
-            const rect = highlightedElement.getBoundingClientRect();
-            const offset = 5;
-
-            // Menentukan posisi kursor untuk resize
-            if (e.clientY >= rect.top - offset && e.clientY <= rect.top + offset) {
-                highlightedElement.style.cursor = 'ns-resize';
-                targetElement = highlightedElement;
-                resizeDirection = 'top';
-            } else if (e.clientY >= rect.bottom - offset && e.clientY <= rect.bottom + offset) {
-                highlightedElement.style.cursor = 'ns-resize';
-                targetElement = highlightedElement;
-                resizeDirection = 'bottom';
-            } else if (e.clientX >= rect.left - offset && e.clientX <= rect.left + offset) {
-                highlightedElement.style.cursor = 'ew-resize';
-                targetElement = highlightedElement;
-                resizeDirection = 'left';
-            } else if (e.clientX >= rect.right - offset && e.clientX <= rect.right + offset) {
-                highlightedElement.style.cursor = 'ew-resize';
-                targetElement = highlightedElement;
-                resizeDirection = 'right';
-            } else {
-                highlightedElement.style.cursor = 'default';
-                targetElement = null;
-                resizeDirection = '';
+        Quill.register(DraggableScroll);
+    
+    
+        // quil js toolbar
+        var quill = new Quill('#editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: {
+                    container: "#toolbar",
+                    handlers: {
+                        link: function(value) {
+                            if (value) {
+                                const href = prompt('Enter the URL');
+                                this.quill.format('link', href);
+                            } else {
+                                this.quill.format('link', false);
+                            }
+                        },
+                        
+                    }
+                },
             }
-        }
-    });
-
-    // Mouse down untuk memulai resize
-    document.addEventListener('mousedown', (e) => {
-        if (targetElement && targetElement.classList.contains('highlighted')) {
-            isResizing = true;
-            const rect = targetElement.getBoundingClientRect();
-            startX = e.clientX;
-            startY = e.clientY;
-            startWidth = rect.width;
-            startHeight = rect.height;
-            e.preventDefault(); // Mencegah pemilihan teks atau hal lainnya
-
-        }
-    });
-
-    // Selama mouse bergerak, ubah ukuran elemen
-    document.addEventListener('mousemove', (e) => {
-        if (isResizing && targetElement) {
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-
-            // Dapatkan posisi elemen (rect) setiap kali mouse bergerak
-            const rect = targetElement.getBoundingClientRect();
-
-            // Resize top, bottom, left, right dengan batas ukuran minimal
-            if (resizeDirection === 'top') {
-                const newHeight = startHeight - dy;
-                if (newHeight >= MIN_SIZE) {
-                    targetElement.style.height = `${newHeight}px`;
-                }
-            } else if (resizeDirection === 'bottom') {
-                const newHeight = startHeight + dy;
-                if (newHeight >= MIN_SIZE) {
-                    targetElement.style.height = `${newHeight}px`;
-                }
-            } else if (resizeDirection === 'left') {
-                const newWidth = startWidth - dx;
-                if (newWidth >= MIN_SIZE) {
-                    targetElement.style.width = `${newWidth}px`;
-                }
-            } else if (resizeDirection === 'right') {
-                const newWidth = startWidth + dx;
-                if (newWidth >= MIN_SIZE) {
-                    targetElement.style.width = `${newWidth}px`;
+        });
+        const toolbar = quill.getModule('toolbar');
+        toolbar.addHandler('image', showImageUI);
+    
+        const editor = document.getElementById('editor');
+        let isResizing = false;
+        let startX, startY, startWidth, startHeight;
+        let targetElement;
+        let resizeDirection = '';
+        const MIN_SIZE = 10; // Minimum size for resize (in px)
+    
+    
+        // Mouseover untuk memilih elemen
+        editor.addEventListener('mouseover', (e) => {
+            const selectedElement = e.target.closest('p');
+            if (selectedElement) {
+                selectedElement.id = 'selected-element';
+                const elementsInsideP = selectedElement.querySelectorAll('img, strong, em, span, p');
+                elementsInsideP.forEach((el) => {
+                    el.classList.remove('highlighted');
+                });
+    
+                if (e.target !== selectedElement) {
+                    e.target.classList.add('highlighted');
                 }
             }
-        }
-    });
-
-    // Menghentikan resizing saat mouse dilepas
-    document.addEventListener('mouseup', () => {
-        if (isResizing) {
-            isResizing = false;
-            if (targetElement) {
-                targetElement.style.cursor = 'default'; // Reset cursor
+        });
+    
+        // Mouseout untuk menghapus highlight dan ID selected-element
+        editor.addEventListener('mouseout', (e) => {
+            if (e.target.closest('p')) {
+                e.target.closest('p').id = '';
+                const elementsInsideP = e.target.closest('p').querySelectorAll('img, strong, em, span, p');
+                elementsInsideP.forEach((el) => {
+                    el.classList.remove('highlighted');
+                });
             }
-            resizeDirection = ''; // Reset resizeDirection 
-            targetElement = null; // Reset targetElement
-        }
-    });
-
-</script>
+        });
+    
+        // Menyentuh batas resize
+        editor.addEventListener('mousemove', (e) => {
+            const highlightedElement = document.querySelector('.highlighted');
+            if (highlightedElement && !isResizing) {
+                const rect = highlightedElement.getBoundingClientRect();
+                const offset = 5;
+    
+                // Menentukan posisi kursor untuk resize
+                if (e.clientY >= rect.top - offset && e.clientY <= rect.top + offset) {
+                    highlightedElement.style.cursor = 'ns-resize';
+                    targetElement = highlightedElement;
+                    resizeDirection = 'top';
+                } else if (e.clientY >= rect.bottom - offset && e.clientY <= rect.bottom + offset) {
+                    highlightedElement.style.cursor = 'ns-resize';
+                    targetElement = highlightedElement;
+                    resizeDirection = 'bottom';
+                } else if (e.clientX >= rect.left - offset && e.clientX <= rect.left + offset) {
+                    highlightedElement.style.cursor = 'ew-resize';
+                    targetElement = highlightedElement;
+                    resizeDirection = 'left';
+                } else if (e.clientX >= rect.right - offset && e.clientX <= rect.right + offset) {
+                    highlightedElement.style.cursor = 'ew-resize';
+                    targetElement = highlightedElement;
+                    resizeDirection = 'right';
+                } else {
+                    highlightedElement.style.cursor = 'default';
+                    targetElement = null;
+                    resizeDirection = '';
+                }
+            }
+        });
+    
+        // Mouse down untuk memulai resize
+        document.addEventListener('mousedown', (e) => {
+            if (targetElement && targetElement.classList.contains('highlighted')) {
+                isResizing = true;
+                const rect = targetElement.getBoundingClientRect();
+                startX = e.clientX;
+                startY = e.clientY;
+                startWidth = rect.width;
+                startHeight = rect.height;
+                e.preventDefault(); // Mencegah pemilihan teks atau hal lainnya
+    
+            }
+        });
+    
+        // Selama mouse bergerak, ubah ukuran elemen
+        document.addEventListener('mousemove', (e) => {
+            if (isResizing && targetElement) {
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+    
+                // Dapatkan posisi elemen (rect) setiap kali mouse bergerak
+                const rect = targetElement.getBoundingClientRect();
+    
+                // Resize top, bottom, left, right dengan batas ukuran minimal
+                if (resizeDirection === 'top') {
+                    const newHeight = startHeight - dy;
+                    if (newHeight >= MIN_SIZE) {
+                        targetElement.style.height = `${newHeight}px`;
+                    }
+                } else if (resizeDirection === 'bottom') {
+                    const newHeight = startHeight + dy;
+                    if (newHeight >= MIN_SIZE) {
+                        targetElement.style.height = `${newHeight}px`;
+                    }
+                } else if (resizeDirection === 'left') {
+                    const newWidth = startWidth - dx;
+                    if (newWidth >= MIN_SIZE) {
+                        targetElement.style.width = `${newWidth}px`;
+                    }
+                } else if (resizeDirection === 'right') {
+                    const newWidth = startWidth + dx;
+                    if (newWidth >= MIN_SIZE) {
+                        targetElement.style.width = `${newWidth}px`;
+                    }
+                }
+            }
+        });
+    
+        // Menghentikan resizing saat mouse dilepas
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                if (targetElement) {
+                    targetElement.style.cursor = 'default'; // Reset cursor
+                }
+                resizeDirection = ''; // Reset resizeDirection 
+                targetElement = null; // Reset targetElement
+            }
+        });
+    
+    </script>
 </body>
 </html>
