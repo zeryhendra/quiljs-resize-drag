@@ -9,6 +9,7 @@ percobaan untuk "resize", "drag and drop" pada teks dan gambar.
    <br>gambar base64 -> "\<img src='...base64...'\>"
    <br>gambar file name -> "\<img src='...file name...'\>" + upload file name
    <br>gambar base64 + gambar file name
+<br>4. switch mode (html editor or texteditor)
    
 <br>
 referensi:
